@@ -1,0 +1,56 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { IconBrandX, IconBrandGithub } from "@tabler/icons-astro";
+---
+
+<Layout title="About" description="このブログと運営者について。">
+  <div class="mx-auto max-w-3xl">
+    <section class="py-32 px-6">
+      <div class="flex flex-col gap-4">
+        <h1 class="text-3xl lg:text-5xl font-bold">About</h1>
+        <p class="text-lg text-zinc-700">自宅サーバーとLinux、たまにプログラミング。</p>
+      </div>
+    </section>
+    <section class="px-6 space-y-12">
+      <div class="space-y-3">
+        <h2 class="text-xl font-semibold">このブログについて</h2>
+        <p class="text-zinc-700">
+          「何度目かのプロローグ」は、自宅サーバーの運用やLinuxの環境構築、プログラミングについて書いている個人ブログです。
+        </p>
+      </div>
+      <div class="space-y-3">
+        <h2 class="text-xl font-semibold">運営者</h2>
+        <p class="text-zinc-700">みにっつ (minittu)。岩手在住。未来永劫、初心者。</p>
+        <p class="text-zinc-700">JavaScript、HTML、CSS、Astro、Next.js、Cloudflare、Docker あたりを触っています。</p>
+      </div>
+      <div class="space-y-3">
+        <h2 class="text-xl font-semibold">作ったもの</h2>
+        <ul class="space-y-2 text-zinc-700">
+          <li>
+            <a href="https://github.com/minittupoyo/aria2gui" target="_blank">aria2gui</a>
+            : Aria2をGUIで使えるようにしたやつ
+          </li>
+          <li>
+            <a href="https://github.com/minittupoyo/dotfiles" target="_blank">dotfiles</a>
+            : My Desktop
+          </li>
+        </ul>
+      </div>
+      <div class="space-y-3">
+        <h2 class="text-xl font-semibold">リンク</h2>
+        <ul class="space-y-2">
+          <li>
+            <a href="https://x.com/dikndisk081" target="_blank" class="inline-flex items-center gap-2">
+              <IconBrandX size="16" />X
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/minittupoyo" target="_blank" class="inline-flex items-center gap-2">
+              <IconBrandGithub size="16" />GitHub
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</Layout>
