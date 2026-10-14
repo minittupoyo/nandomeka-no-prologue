@@ -1,0 +1,12 @@
+{
+  "fetchedAt": 1791936859850,
+  "metadata": {
+    "url": "https://jellyfin.org/",
+    "title": "The Free Software Media System | Jellyfin",
+    "description": "The volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached.",
+    "image": "https://jellyfin.org/images/social.png?v2",
+    "favicon": "https://jellyfin.org/images/favicon.ico"
+  },
+  "url": "https://jellyfin.org/",
+  "version": 1
+}

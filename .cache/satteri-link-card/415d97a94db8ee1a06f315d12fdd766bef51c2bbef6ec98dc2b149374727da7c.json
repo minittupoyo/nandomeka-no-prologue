@@ -1,0 +1,13 @@
+{
+  "fetchedAt": 1791936116067,
+  "metadata": {
+    "url": "https://pagescms.org/",
+    "title": "Pages CMS",
+    "siteName": "Pages CMS",
+    "description": "Manage content and media right in your GitHub repository. No database, no API, no extra backend.",
+    "image": "https://pagescms.org/assets/social-card.png",
+    "favicon": "https://pagescms.org/assets/favicon.svg"
+  },
+  "url": "https://pagescms.org/",
+  "version": 1
+}

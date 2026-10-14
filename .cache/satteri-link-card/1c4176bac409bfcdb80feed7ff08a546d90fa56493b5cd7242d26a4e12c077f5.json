@@ -1,0 +1,13 @@
+{
+  "fetchedAt": 1791936859881,
+  "metadata": {
+    "url": "https://nuxt.com/",
+    "title": "Nuxt: The Full-Stack Vue Framework",
+    "siteName": "Nuxt",
+    "description": "Build fast, production-ready web apps with Vue. File-based routing, auto-imports, and server-side rendering — all configured out of the box.",
+    "image": "https://nuxt.com/new-social.jpg",
+    "favicon": "https://nuxt.com/icon.png"
+  },
+  "url": "https://nuxt.com/",
+  "version": 1
+}

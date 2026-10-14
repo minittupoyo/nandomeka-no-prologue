@@ -1,11 +1,39 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const posts = (await getCollection("blog", ({ data }) => (import.meta.env.PROD ? !data.draft : true)))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 6);
 ---
 
 <Layout>
-	<Welcome />
+  <div class="mx-auto max-w-6xl">
+    <section class="py-32 px-6">
+      <div class="flex flex-col gap-4">
+        <h1 class="text-3xl lg:text-5xl font-bold">何度目かのプロローグ</h1>
+        <p class="text-lg text-zinc-700">自宅サーバーとLinux、たまにプログラミング。</p>
+      </div>
+    </section>
+    <section class="py-8 px-6">
+      <div class="flex flex-row items-center justify-between">
+        <p class="text-lg font-medium">最近の投稿</p>
+        <a href="/blog">一覧へ &rarr;</a>
+      </div>
+      <div class="mt-8 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {posts.map((p) => (
+          <a
+            href={`/blog/${p.id}`}
+            class="flex flex-col rounded-xl p-4 border border-zinc-200 space-y-2 transition-colors hover:border-zinc-600"
+          >
+            <p class="text-sm text-zinc-600">
+              {p.data.date.toLocaleDateString("ja-jp", { year: "numeric", month: "2-digit", day: "2-digit" })}
+            </p>
+            <h3 class="text-xl font-semibold">{p.data.title}</h3>
+            <p class="text-sm font-medium text-zinc-700">{p.data.description}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
 </Layout>

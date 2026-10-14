@@ -1,0 +1,13 @@
+{
+  "fetchedAt": 1791936861957,
+  "metadata": {
+    "url": "https://rclone.org/",
+    "title": "Rclone",
+    "siteName": "Rclone",
+    "description": "Rclone syncs your files to cloud storage: Google Drive, S3, Swift, Dropbox, Google Cloud Storage, Azure, Box and many more.",
+    "image": "https://rclone.org/img/rclone-1200x630.png",
+    "favicon": "https://rclone.org/img/rclone-32x32.png"
+  },
+  "url": "https://rclone.org/",
+  "version": 1
+}

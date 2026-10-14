@@ -1,0 +1,13 @@
+{
+  "fetchedAt": 1791936860480,
+  "metadata": {
+    "url": "https://astro.build/",
+    "title": "Astro",
+    "siteName": "Astro",
+    "description": "Astro builds fast content sites, powerful web applications, dynamic server APIs, and everything in-between.",
+    "image": "https://astro.build/og/astro.jpg",
+    "favicon": "https://astro.build/favicon.svg"
+  },
+  "url": "https://astro.build/",
+  "version": 1
+}
