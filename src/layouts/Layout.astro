@@ -6,12 +6,14 @@ import Footer from "@/components/Footer.astro";
 interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
 }
 
-const { title, description } = Astro.props;
+const { title, description, ogImage } = Astro.props;
 
 const PAGE_TITLE = title ? `${title} - 何度目かのプロローグ` : "何度目かのプロローグ";
 const PAGE_DESCRIPTION = description;
+const OG_IMAGE = ogImage ? new URL(ogImage, Astro.site).href : undefined;
 ---
 
 <!doctype html>
@@ -23,6 +25,12 @@ const PAGE_DESCRIPTION = description;
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={PAGE_DESCRIPTION} />
+    <meta property="og:title" content={PAGE_TITLE} />
+    <meta property="og:description" content={PAGE_DESCRIPTION} />
+    <meta property="og:type" content={ogImage ? "article" : "website"} />
+    <meta name="twitter:card" content={OG_IMAGE ? "summary_large_image" : "summary"} />
+    {OG_IMAGE && <meta property="og:image" content={OG_IMAGE} />}
+    {OG_IMAGE && <meta name="twitter:image" content={OG_IMAGE} />}
     <title>{PAGE_TITLE}</title>
   </head>
   <body class="flex flex-col min-h-svh antialiased">

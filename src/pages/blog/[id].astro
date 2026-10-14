@@ -15,7 +15,7 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 ---
 
-<Layout title={post.data.title} description={post.data.description}>
+<Layout title={post.data.title} description={post.data.description} ogImage={`/og/${post.id}.png`}>
   <div class="mx-auto max-w-4xl">
     <section class="py-16 px-6">
       <div class="flex flex-col items-center justify-center text-center space-y-4">

@@ -20,8 +20,10 @@
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.8",
     "astro-expressive-code": "^0.44.2",
+    "budoux": "^0.9.3",
     "satteri-link-card": "^0.5.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "takumi-js": "^2.15.2"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.20",
