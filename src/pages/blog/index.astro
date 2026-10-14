@@ -7,11 +7,11 @@ const posts = (await getCollection("blog", ({ data }) => (import.meta.env.PROD ?
 );
 ---
 
-<Layout>
+<Layout title="すべての記事" description="このブログのすべての記事">
   <div class="mx-auto max-w-6xl">
     <section class="py-16 px-6">
       <div class="flex flex-col gap-4">
-        <h1 class="text-3xl lg:text-5xl font-bold">記事一覧</h1>
+        <h1 class="text-3xl lg:text-5xl font-bold">すべての記事</h1>
         <p class="text-lg text-zinc-700">これまでに投稿した記事の一覧です。</p>
       </div>
     </section>
