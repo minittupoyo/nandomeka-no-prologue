@@ -26,4 +26,5 @@ export default defineConfig({
       themes: ["catppuccin-frappe", "catppuccin-latte"],
     }),
   ],
+  site: "https://blog.xn--j9jct3f.jp",
 });
