@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
 import { IconHome } from "@tabler/icons-astro";
 
 export async function getStaticPaths() {
@@ -12,11 +13,11 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 ---
 
 <Layout title={post.data.title} description={post.data.description} ogImage={`/og/${post.id}.png`}>
-  <div class="mx-auto max-w-4xl">
+  <div class="mx-auto max-w-6xl">
     <section class="py-16 px-6">
       <div class="flex flex-col items-center justify-center text-center space-y-4">
         <div class="flex flex-row items-center justify-start w-full space-x-2">
@@ -39,10 +40,18 @@ const { Content } = await render(post);
         <p class="text-lg font-semibold text-zinc-700">{post.data.description}</p>
       </div>
     </section>
-    <section class="px-6">
-      <div class="max-w-none prose prose-zinc prose-img:rounded-xl prose-img:shadow-sm [&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:aspect-video [&_iframe]:rounded-xl">
+    <section class="px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_14rem] lg:gap-10">
+      <div class="mb-8 lg:hidden">
+        <TableOfContents headings={headings} />
+      </div>
+      <div class="min-w-0 max-w-none prose prose-zinc prose-img:rounded-xl prose-img:shadow-sm [&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:aspect-video [&_iframe]:rounded-xl">
         <Content />
       </div>
+      <aside class="hidden lg:block">
+        <div class="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+          <TableOfContents headings={headings} />
+        </div>
+      </aside>
     </section>
   </div>
 </Layout>
