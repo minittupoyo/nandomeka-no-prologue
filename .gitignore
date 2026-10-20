@@ -24,3 +24,5 @@ pnpm-debug.log*
 .idea/
 
 .wrangler/
+# local secrets for wrangler
+.dev.vars
