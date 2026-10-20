@@ -1,3 +1,4 @@
+import { LISTENBRAINZ_USER } from "../src/const";
 import { releaseSearchUrl } from "../src/lib/listenbrainz";
 
 interface Env {
@@ -59,9 +60,40 @@ const handleCover = async (request: Request, env: Env, ctx: { waitUntil: (p: Pro
   return response;
 };
 
+const NOW_TTL = 10;
+
+/**
+ * 再生中の曲と直近の再生を1つにまとめて返す。結果はエッジで共有キャッシュされるので、
+ * 閲覧者が何人いても ListenBrainz への問い合わせは NOW_TTL 秒に1回（×2リクエスト）で済む
+ */
+const handleNow = async (request: Request, ctx: { waitUntil: (p: Promise<unknown>) => void }) => {
+  const cache = (caches as unknown as { default: Cache }).default;
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  const base = `https://api.listenbrainz.org/1/user/${LISTENBRAINZ_USER}`;
+  const get = async (path: string): Promise<any[]> => {
+    const res = await fetch(`${base}/${path}`, { headers: { "user-agent": UA } });
+    if (!res.ok) throw new Error(String(res.status));
+    return ((await res.json()) as any).payload.listens;
+  };
+
+  try {
+    const [playing, recent] = await Promise.all([get("playing-now").catch(() => []), get("listens?count=10")]);
+    const response = json({ playing: playing[0], recent }, NOW_TTL);
+    ctx.waitUntil(cache.put(request, response.clone()));
+    return response;
+  } catch {
+    // 取得できないときは短時間だけ失敗をキャッシュせず返す（フロントが直接取得にフォールバックする）
+    return new Response(null, { status: 502, headers: { "cache-control": "no-store" } });
+  }
+};
+
 export default {
   fetch(request: Request, env: Env, ctx: { waitUntil: (p: Promise<unknown>) => void }) {
-    if (new URL(request.url).pathname === "/api/cover") return handleCover(request, env, ctx);
+    const { pathname } = new URL(request.url);
+    if (pathname === "/api/cover") return handleCover(request, env, ctx);
+    if (pathname === "/api/now") return handleNow(request, ctx);
     return env.ASSETS.fetch(request);
   },
 };

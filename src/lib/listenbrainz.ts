@@ -1,3 +1,5 @@
+import { LISTENBRAINZ_USER } from "@/const";
+
 export type Listen = {
   listened_at?: number;
   track_metadata: {
@@ -115,4 +117,83 @@ export const lookupCoverUrl = async ({ track_metadata: m }: Listen, size: 250 | 
   } catch {
     return undefined;
   }
+};
+
+export type NowPlaying = { playing?: Listen; recent: Listen[] };
+
+/** 自サイトの Worker（/api/now、エッジでキャッシュ済み）から取得し、使えない環境では ListenBrainz へ直接問い合わせる */
+const fetchNowPlaying = async (): Promise<NowPlaying> => {
+  try {
+    const data = await fetchJson("/api/now");
+    if (Array.isArray(data.recent)) return data;
+  } catch {
+    // Worker がない（開発サーバーなど）・失敗した場合は直接取得する
+  }
+  const [playing, recent] = await Promise.all([
+    getPlayingNow(LISTENBRAINZ_USER),
+    getListens(LISTENBRAINZ_USER, "listens?count=10"),
+  ]);
+  return { playing, recent };
+};
+
+const ACTIVE_INTERVAL = 15_000;
+const IDLE_INTERVAL = 60_000;
+const IDLE_AFTER = 30 * 60;
+
+type Subscriber = (state: NowPlaying | null) => void;
+
+const subscribers = new Set<Subscriber>();
+let latest: NowPlaying | null | undefined;
+let lastFetchedAt = 0;
+let timer: ReturnType<typeof setTimeout> | undefined;
+let inflight = false;
+
+const interval = () => {
+  const lastListen = latest?.recent[0]?.listened_at;
+  const active = latest?.playing || (lastListen && Date.now() / 1000 - lastListen < IDLE_AFTER);
+  return active ? ACTIVE_INTERVAL : IDLE_INTERVAL;
+};
+
+const schedule = () => {
+  clearTimeout(timer);
+  if (subscribers.size === 0 || document.hidden) return;
+  timer = setTimeout(tick, Math.max(0, lastFetchedAt + interval() - Date.now()));
+};
+
+const tick = async () => {
+  if (inflight) return;
+  inflight = true;
+  try {
+    latest = await fetchNowPlaying();
+  } catch {
+    // 一時的な失敗では表示を消さない。まだ一度も取得できていないときだけ「なし」を通知する
+    latest ??= null;
+  }
+  inflight = false;
+  lastFetchedAt = Date.now();
+  subscribers.forEach((cb) => cb(latest ?? null));
+  schedule();
+};
+
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) schedule();
+    else clearTimeout(timer);
+  });
+}
+
+/**
+ * なうぷれの状態を購読する。ページ内の購読者で1つのポーリングを共有する。
+ * - 表示中のみ取得（非表示のタブでは止まり、戻ると経過時間に応じてすぐ再取得）
+ * - 再生中・直近30分以内の再生があれば15秒間隔、それ以外は60秒間隔
+ */
+export const subscribeNowPlaying = (cb: Subscriber) => {
+  subscribers.add(cb);
+  if (latest !== undefined) cb(latest);
+  if (subscribers.size === 1 && latest === undefined) void tick();
+  else schedule();
+  return () => {
+    subscribers.delete(cb);
+    if (subscribers.size === 0) clearTimeout(timer);
+  };
 };

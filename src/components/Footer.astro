@@ -13,7 +13,6 @@ import { LISTENBRAINZ_USER } from "@/const";
         id="now-playing"
         href={`https://listenbrainz.org/user/${LISTENBRAINZ_USER}/`}
         target="_blank"
-        data-user={LISTENBRAINZ_USER}
         hidden
         class="flex min-w-0 items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900"
       >
@@ -34,16 +33,13 @@ import { LISTENBRAINZ_USER } from "@/const";
 </footer>
 
 <script>
-  import { getListens, getPlayingNow, type Listen } from "@/lib/listenbrainz";
+  import { subscribeNowPlaying, type Listen } from "@/lib/listenbrainz";
 
   const root = document.getElementById("now-playing") as HTMLAnchorElement | null;
   const label = document.getElementById("now-playing-label");
   const track = document.getElementById("now-playing-track");
 
   if (root && label && track) {
-    const user = root.dataset.user!;
-    const get = (path: string) => getListens(user, path);
-
     const show = (text: string, listen: Listen) => {
       const { track_name, artist_name } = listen.track_metadata;
       label.textContent = text;
@@ -51,21 +47,10 @@ import { LISTENBRAINZ_USER } from "@/const";
       root.hidden = false;
     };
 
-    const update = async () => {
-      try {
-        const playing = await getPlayingNow(user);
-        if (playing) return show("再生中:", playing);
-        const [recent] = await get("listens?count=1");
-        if (recent) return show("最近聴いた曲:", recent);
-      } catch {
-        // 取得できないときは表示しない
-      }
-      root.hidden = true;
-    };
-
-    update();
-    setInterval(() => {
-      if (!document.hidden) update();
-    }, 60_000);
+    subscribeNowPlaying((state) => {
+      if (state?.playing) show("再生中:", state.playing);
+      else if (state?.recent[0]) show("最近聴いた曲:", state.recent[0]);
+      else root.hidden = true;
+    });
   }
 </script>

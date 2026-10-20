@@ -52,7 +52,7 @@ import { LISTENBRAINZ_USER } from "@/const";
           </li>
         </ul>
       </div>
-      <div id="listening" data-user={LISTENBRAINZ_USER} hidden class="space-y-3">
+      <div id="listening" hidden class="space-y-3">
         <h2 class="text-xl font-semibold">最近聴いている曲</h2>
         <a
           id="listening-current"
@@ -81,7 +81,7 @@ import { LISTENBRAINZ_USER } from "@/const";
 </Layout>
 
 <script>
-  import { coverUrl, getListens, getPlayingNow, isSameTrack, lookupCoverUrl, type Listen } from "@/lib/listenbrainz";
+  import { coverUrl, isSameTrack, lookupCoverUrl, subscribeNowPlaying, type Listen } from "@/lib/listenbrainz";
 
   const root = document.getElementById("listening");
   const el = (id: string) => document.getElementById(id)!;
@@ -95,8 +95,12 @@ import { LISTENBRAINZ_USER } from "@/const";
     return rtf.format(Math.round(diff / 60 / 24), "day");
   };
 
+  let shownTrack: Listen | undefined;
+
   const showCurrent = async (label: string, listen: Listen, coverFrom: Listen = listen) => {
     const m = listen.track_metadata;
+    const changed = !shownTrack || !isSameTrack(shownTrack, listen);
+    shownTrack = listen;
     el("listening-label").textContent = label;
     el("listening-track").textContent = m.track_name;
     el("listening-artist").textContent = m.artist_name;
@@ -104,6 +108,7 @@ import { LISTENBRAINZ_USER } from "@/const";
 
     const cover = el("listening-cover") as HTMLImageElement;
     const fallback = el("listening-cover-fallback");
+    if (!changed) return;
     cover.hidden = true;
     fallback.removeAttribute("hidden");
     const url = coverUrl(listen) ?? coverUrl(coverFrom) ?? (await lookupCoverUrl(listen));
@@ -134,20 +139,14 @@ import { LISTENBRAINZ_USER } from "@/const";
     );
   };
 
-  const load = async () => {
+  subscribeNowPlaying((state) => {
     if (!root) return;
-    const user = root.dataset.user!;
-    try {
-      const [playing, recent] = await Promise.all([getPlayingNow(user), getListens(user, "listens?count=10")]);
-      if (playing) void showCurrent("再生中", playing, recent.find((l) => isSameTrack(l, playing)) ?? playing);
-      else if (recent[0]) void showCurrent("最近聴いた曲", recent[0]);
-      else return;
-      showHistory(playing ? recent : recent.slice(1));
-      root.hidden = false;
-    } catch {
-      // 取得できないときはセクションごと表示しない
-    }
-  };
-
-  load();
+    const playing = state?.playing;
+    const recent = state?.recent ?? [];
+    if (playing) void showCurrent("再生中", playing, recent.find((l) => isSameTrack(l, playing)) ?? playing);
+    else if (recent[0]) void showCurrent("最近聴いた曲", recent[0]);
+    else return;
+    showHistory(playing ? recent : recent.slice(1));
+    root.hidden = false;
+  });
 </script>
