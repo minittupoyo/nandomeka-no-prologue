@@ -1,0 +1,46 @@
+---
+import { IconArrowLeft, IconArrowRight } from "@tabler/icons-astro";
+
+interface Post {
+  id: string;
+  title: string;
+}
+
+interface Props {
+  prev?: Post;
+  next?: Post;
+}
+
+const { prev, next } = Astro.props;
+---
+
+{
+  (prev || next) && (
+    <nav aria-label="前後の記事" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {prev && (
+        <a
+          href={`/blog/${prev.id}`}
+          class="flex flex-col gap-1 rounded-xl border border-zinc-200 p-4 transition-colors hover:border-zinc-600 sm:col-start-1"
+        >
+          <span class="flex items-center gap-1 text-sm text-zinc-600">
+            <IconArrowLeft size="16" aria-hidden="true" />
+            前の記事
+          </span>
+          <span class="line-clamp-2 font-semibold">{prev.title}</span>
+        </a>
+      )}
+      {next && (
+        <a
+          href={`/blog/${next.id}`}
+          class="flex flex-col items-end gap-1 rounded-xl border border-zinc-200 p-4 text-right transition-colors hover:border-zinc-600 sm:col-start-2"
+        >
+          <span class="flex items-center gap-1 text-sm text-zinc-600">
+            次の記事
+            <IconArrowRight size="16" aria-hidden="true" />
+          </span>
+          <span class="line-clamp-2 font-semibold">{next.title}</span>
+        </a>
+      )}
+    </nav>
+  )
+}

@@ -2,17 +2,21 @@
 import { getCollection, render } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import TableOfContents from "@/components/TableOfContents.astro";
+import PostNav from "@/components/PostNav.astro";
 import { IconHome } from "@tabler/icons-astro";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }) => (import.meta.env.PROD ? !data.draft : true));
-  return posts.map((post) => ({
+  const posts = (await getCollection("blog", ({ data }) => (import.meta.env.PROD ? !data.draft : true))).sort(
+    (a, b) => a.data.date.valueOf() - b.data.date.valueOf(),
+  );
+  const toLink = (p?: (typeof posts)[number]) => (p ? { id: p.id, title: p.data.title } : undefined);
+  return posts.map((post, i) => ({
     params: { id: post.id },
-    props: { post },
+    props: { post, prev: toLink(posts[i - 1]), next: toLink(posts[i + 1]) },
   }));
 }
 
-const { post } = Astro.props;
+const { post, prev, next } = Astro.props;
 const { Content, headings } = await render(post);
 ---
 
@@ -52,6 +56,9 @@ const { Content, headings } = await render(post);
           <TableOfContents headings={headings} />
         </div>
       </aside>
+    </section>
+    <section class="px-6 pt-16">
+      <PostNav prev={prev} next={next} />
     </section>
   </div>
 </Layout>
