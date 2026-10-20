@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-20T00:00:00Z",
+  "title": "Design System: 何度目かのプロローグ",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Signal Orange",
+        "canonical": "#f97316",
+        "tonalRamp": [
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#fb923c",
+          "#fdba74",
+          "#ffedd5"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#18181b",
+        "tonalRamp": [
+          "#09090b",
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#a1a1aa",
+          "#e4e4e7",
+          "#f4f4f5"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e4e7",
+        "tonalRamp": [
+          "#09090b",
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#a1a1aa",
+          "#e4e4e7",
+          "#f4f4f5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "ページタイトル(h1)。"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "記事本文。"
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "color-transition",
+        "value": "150ms ease-out",
+        "purpose": "ホバー時の色・枠線の変化。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Post Card",
+      "kind": "card",
+      "refersTo": "post-card",
+      "description": "記事一覧の1件。枠線のみで区切る。",
+      "html": "<a class=\"ds-post-card\" href=\"#\"><p class=\"ds-date\">2026/10/20</p><h2>記事のタイトル</h2><p class=\"ds-desc\">記事の説明文がここに入ります。</p></a>",
+      "css": ".ds-post-card{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;color:#18181b;text-decoration:none;transition:border-color 150ms ease-out}.ds-post-card:hover{border-color:#52525b}.ds-post-card:focus-visible{outline:2px solid #f97316;outline-offset:2px}.ds-date{margin:0;font-size:14px;color:#52525b}.ds-post-card h2{margin:0;font-size:20px;font-weight:600}.ds-desc{margin:0;font-size:14px;font-weight:500;color:#3f3f46}"
+    },
+    {
+      "name": "Table of Contents",
+      "kind": "nav",
+      "refersTo": "toc",
+      "description": "記事内の目次。現在位置を左線で示す。",
+      "html": "<nav class=\"ds-toc\"><p>目次</p><ul><li><a class=\"active\" href=\"#\">見出し1</a></li><li><a href=\"#\">見出し2</a></li></ul></nav>",
+      "css": ".ds-toc{padding:16px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;font-size:14px}.ds-toc p{margin:0 0 8px;font-weight:700;color:#18181b}.ds-toc ul{margin:0;padding:0;list-style:none}.ds-toc li{margin:6px 0}.ds-toc a{display:block;padding-left:8px;border-left:2px solid transparent;color:#52525b;text-decoration:none}.ds-toc a:hover{color:#18181b}.ds-toc a.active{border-left-color:#f97316;color:#18181b;font-weight:500}"
+    },
+    {
+      "name": "Header",
+      "kind": "nav",
+      "refersTo": "header",
+      "description": "固定ヘッダー。下に薄い線。",
+      "html": "<header class=\"ds-header\"><a class=\"ds-logo\" href=\"#\">何度目かのプロローグ</a><div><a href=\"#\" aria-current=\"page\">Blog</a><a href=\"#\">About</a></div></header>",
+      "css": ".ds-header{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 24px;border-bottom:1px solid #f4f4f5;background:rgba(255,255,255,.6)}.ds-logo{font-size:18px;font-weight:700;color:#18181b;text-decoration:none}.ds-header div{display:flex;gap:24px}.ds-header div a{font-weight:500;color:#3f3f46;text-decoration:none;transition:color 150ms}.ds-header div a:hover{color:#18181b}.ds-header div a[aria-current=page]{color:#18181b;text-decoration:underline;text-decoration-color:#f97316;text-decoration-thickness:2px;text-underline-offset:8px}"
+    },
+    {
+      "name": "Inline Link",
+      "kind": "custom",
+      "refersTo": "link-inline",
+      "description": "文字は本文色、下線だけオレンジ。",
+      "html": "<p class=\"ds-p\">詳しくは<a class=\"ds-link\" href=\"#\">こちらの記事</a>を参照。</p>",
+      "css": ".ds-p{margin:0;color:#18181b}.ds-link{color:#18181b;text-decoration:underline;text-decoration-color:#f97316;text-decoration-thickness:2px;text-underline-offset:4px;transition:text-decoration-color 150ms}.ds-link:hover{text-decoration-color:#ea580c}.ds-link:focus-visible{outline:2px solid #f97316;outline-offset:2px}"
+    },
+    {
+      "name": "Link Card",
+      "kind": "card",
+      "refersTo": "link-card",
+      "description": "記事内に埋め込まれる外部リンクカード。ホバーで枠が濃くなる。",
+      "html": "<a class=\"ds-lc\" href=\"#\"><div class=\"ds-lc-body\"><strong>リンク先のタイトル</strong><span>説明文が入ります。</span><small>example.com</small></div></a>",
+      "css": ".ds-lc{display:block;border:1px solid #e4e4e7;border-radius:12px;background:#fff;color:#18181b;text-decoration:none;transition:border-color 150ms ease-out}.ds-lc:hover{border-color:#52525b}.ds-lc-body{display:flex;flex-direction:column;gap:4px;padding:16px}.ds-lc span{font-size:14px;color:#52525b}.ds-lc small{font-size:12px;color:#52525b}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Notebook",
+    "overview": "白いページに文字が置かれているだけのように見える、Notion風のミニマルな設計。主役は記事で、UIは目に入らないところまで引く。装飾は持たず、階層はグレーの細い枠線と余白で作る。\n\nオレンジはリンクの下線、フォーカスリング、現在位置の印にだけ使う。文字色にはしない。",
+    "keyCharacteristics": [
+      "白とzincの階調だけで構成し、色はオレンジ1色のみ",
+      "階層は枠線が主、影は控えめな補助",
+      "余白は4の倍数。読む幅を広げすぎない",
+      "日本語と欧文を同じfont-sansで混植する"
+    ],
+    "rules": [
+      {
+        "name": "The One Spark Rule",
+        "body": "オレンジは線と印にだけ使う。文字色、ボタンの塗り、バッジ、見出し、背景には使わない。",
+        "section": "colors"
+      },
+      {
+        "name": "The Mixed-Script Rule",
+        "body": "和文と欧文でフォントを切り替えない。",
+        "section": "typography"
+      },
+      {
+        "name": "The Border-First Rule",
+        "body": "面を分けるときはまず1pxのグレー枠を使い、足りない場合にだけごく弱い影を足す。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "色の階調はzinc系で統一する。",
+      "余白と寸法は4の倍数にする。",
+      "面の区切りはグレーの1px枠で表す。",
+      "リンクは下線のオレンジで示す。クラスはlink-inline。",
+      "現在位置は線で示す。"
+    ],
+    "donts": [
+      "オレンジを文字色、ボタンの塗り、見出し、背景に使わない。",
+      "影で階層を作らない。足す場合も控えめに留める。",
+      "角丸を12pxより大きくしない。",
+      "色コードを直書きしない。zincのスケールを使う。",
+      "装飾（グラデーション、アイコンの飾り、アニメーション演出）を足さない。"
+    ]
+  }
+}
