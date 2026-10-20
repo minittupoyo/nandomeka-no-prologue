@@ -8,3 +8,5 @@ export const HEADER_LINK: { label: string; to: string }[] = [
     to: "/blog",
   },
 ];
+
+export const LISTENBRAINZ_USER = "minittupoyo";

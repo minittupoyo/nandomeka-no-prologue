@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { IconBrandX, IconBrandGithub } from "@tabler/icons-astro";
+import { IconBrandX, IconBrandGithub, IconMusic } from "@tabler/icons-astro";
+import { LISTENBRAINZ_USER } from "@/const";
 ---
 
 <Layout title="About" description="このブログと運営者について。">
@@ -51,6 +52,102 @@ import { IconBrandX, IconBrandGithub } from "@tabler/icons-astro";
           </li>
         </ul>
       </div>
+      <div id="listening" data-user={LISTENBRAINZ_USER} hidden class="space-y-3">
+        <h2 class="text-xl font-semibold">最近聴いている曲</h2>
+        <a
+          id="listening-current"
+          href={`https://listenbrainz.org/user/${LISTENBRAINZ_USER}/`}
+          target="_blank"
+          class="flex items-center gap-4 rounded-xl border border-zinc-200 p-4 text-zinc-900 no-underline transition-colors hover:border-zinc-600"
+        >
+          <div class="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100 text-zinc-600">
+            <img id="listening-cover" alt="" width="96" height="96" hidden class="size-full object-cover" />
+            <IconMusic id="listening-cover-fallback" size="24" aria-hidden="true" />
+          </div>
+          <div class="min-w-0 space-y-1">
+            <p id="listening-label" class="text-sm text-zinc-600"></p>
+            <p id="listening-track" class="line-clamp-2 font-semibold"></p>
+            <p id="listening-artist" class="truncate text-sm text-zinc-700"></p>
+            <p id="listening-album" class="truncate text-sm text-zinc-600"></p>
+          </div>
+        </a>
+        <div class="space-y-2">
+          <h3 class="text-sm font-medium text-zinc-600">再生履歴</h3>
+          <ul id="listening-history" class="divide-y divide-zinc-200 rounded-xl border border-zinc-200 text-sm"></ul>
+        </div>
+      </div>
     </section>
   </div>
 </Layout>
+
+<script>
+  import { coverUrl, getListens, getPlayingNow, isSameTrack, lookupCoverUrl, type Listen } from "@/lib/listenbrainz";
+
+  const root = document.getElementById("listening");
+  const el = (id: string) => document.getElementById(id)!;
+
+  const relative = (sec?: number) => {
+    if (!sec) return "";
+    const diff = Math.round((sec * 1000 - Date.now()) / 60000);
+    const rtf = new Intl.RelativeTimeFormat("ja", { numeric: "auto" });
+    if (Math.abs(diff) < 60) return rtf.format(diff, "minute");
+    if (Math.abs(diff) < 60 * 24) return rtf.format(Math.round(diff / 60), "hour");
+    return rtf.format(Math.round(diff / 60 / 24), "day");
+  };
+
+  const showCurrent = async (label: string, listen: Listen, coverFrom: Listen = listen) => {
+    const m = listen.track_metadata;
+    el("listening-label").textContent = label;
+    el("listening-track").textContent = m.track_name;
+    el("listening-artist").textContent = m.artist_name;
+    el("listening-album").textContent = m.release_name ?? "";
+
+    const cover = el("listening-cover") as HTMLImageElement;
+    const fallback = el("listening-cover-fallback");
+    cover.hidden = true;
+    fallback.removeAttribute("hidden");
+    const url = coverUrl(listen) ?? coverUrl(coverFrom) ?? (await lookupCoverUrl(listen));
+    if (url) {
+      cover.onload = () => {
+        cover.hidden = false;
+        fallback.setAttribute("hidden", "");
+      };
+      cover.src = url;
+    }
+  };
+
+  const showHistory = (listens: Listen[]) => {
+    const list = el("listening-history");
+    list.replaceChildren(
+      ...listens.map((l) => {
+        const li = document.createElement("li");
+        li.className = "flex items-baseline justify-between gap-4 px-4 py-2";
+        const title = document.createElement("span");
+        title.className = "min-w-0 truncate";
+        title.textContent = `${l.track_metadata.track_name} - ${l.track_metadata.artist_name}`;
+        const time = document.createElement("span");
+        time.className = "shrink-0 text-xs text-zinc-600";
+        time.textContent = relative(l.listened_at);
+        li.append(title, time);
+        return li;
+      }),
+    );
+  };
+
+  const load = async () => {
+    if (!root) return;
+    const user = root.dataset.user!;
+    try {
+      const [playing, recent] = await Promise.all([getPlayingNow(user), getListens(user, "listens?count=10")]);
+      if (playing) void showCurrent("再生中", playing, recent.find((l) => isSameTrack(l, playing)) ?? playing);
+      else if (recent[0]) void showCurrent("最近聴いた曲", recent[0]);
+      else return;
+      showHistory(playing ? recent : recent.slice(1));
+      root.hidden = false;
+    } catch {
+      // 取得できないときはセクションごと表示しない
+    }
+  };
+
+  load();
+</script>
