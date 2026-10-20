@@ -10,6 +10,16 @@
 }
 
 @layer base {
+  html {
+    @apply scroll-pt-20;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      @apply scroll-smooth;
+    }
+  }
+
   :focus-visible {
     @apply rounded-xs outline-2 outline-offset-2 outline-orange-500;
   }
