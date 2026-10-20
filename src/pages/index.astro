@@ -17,8 +17,8 @@ const posts = (await getCollection("blog", ({ data }) => (import.meta.env.PROD ?
     </section>
     <section class="py-8 px-6">
       <div class="flex flex-row items-center justify-between">
-        <p class="text-lg font-medium">最近の投稿</p>
-        <a href="/blog">一覧へ &rarr;</a>
+        <h2 class="text-lg font-medium">最近の投稿</h2>
+        <a href="/blog" class="link-inline">一覧へ &rarr;</a>
       </div>
       <div class="mt-8 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {posts.map((p) => (

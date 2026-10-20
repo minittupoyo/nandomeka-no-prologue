@@ -10,7 +10,7 @@ const headings = Astro.props.headings.filter((h) => h.depth >= 2 && h.depth <= 3
 
 {
   headings.length > 0 && (
-    <nav aria-label="目次" class="toc rounded-xl border border-zinc-100 bg-white p-4 text-sm">
+    <nav aria-label="目次" class="toc rounded-xl border border-zinc-200 bg-white p-4 text-sm">
       <p class="mb-2 font-bold text-zinc-900">目次</p>
       <ul class="space-y-1.5">
         {headings.map((h) => (
@@ -18,7 +18,7 @@ const headings = Astro.props.headings.filter((h) => h.depth >= 2 && h.depth <= 3
             <a
               href={`#${h.slug}`}
               data-toc-link={h.slug}
-              class="block border-l-2 border-transparent pl-2 text-zinc-600 transition hover:text-zinc-900 data-[active=true]:border-zinc-900 data-[active=true]:font-medium data-[active=true]:text-zinc-900"
+              class="block border-l-2 border-transparent pl-2 text-zinc-600 transition hover:text-zinc-900 data-[active=true]:border-orange-500 data-[active=true]:font-medium data-[active=true]:text-zinc-900"
             >
               {h.text}
             </a>

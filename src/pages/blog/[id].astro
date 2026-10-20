@@ -19,19 +19,19 @@ const { Content, headings } = await render(post);
 <Layout title={post.data.title} description={post.data.description} ogImage={`/og/${post.id}.png`}>
   <div class="mx-auto max-w-6xl">
     <section class="py-16 px-6">
-      <div class="flex flex-col items-center justify-center text-center space-y-4">
+      <div class="flex flex-col items-start text-left space-y-4">
         <div class="flex flex-row items-center justify-start w-full space-x-2">
-          <a href="/" class="text-left">
+          <a href="/" class="text-left" aria-label="ホーム">
             <IconHome size="16" />
           </a>
-          <span class="text-zinc-200">/</span>
+          <span class="text-zinc-400" aria-hidden="true">/</span>
           <a href="/blog" class="text-left">
             Blog
           </a>
-          <span class="text-zinc-200">/</span>
-          <a href="/" class="line-clamp-1 text-left">
+          <span class="text-zinc-400" aria-hidden="true">/</span>
+          <span class="line-clamp-1 text-left text-zinc-600" aria-current="page">
             {post.data.title}
-          </a>
+          </span>
         </div>
         <p class="text-sm text-zinc-600">
           {post.data.date.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" })}
@@ -44,7 +44,7 @@ const { Content, headings } = await render(post);
       <div class="mb-8 lg:hidden">
         <TableOfContents headings={headings} />
       </div>
-      <div class="min-w-0 max-w-none prose prose-zinc prose-img:rounded-xl prose-img:shadow-sm [&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:aspect-video [&_iframe]:rounded-xl">
+      <div class="min-w-0 max-w-none prose prose-zinc prose-a:text-zinc-900 prose-a:decoration-orange-500 prose-a:decoration-2 prose-a:underline-offset-4 prose-img:rounded-xl prose-img:shadow-sm [&_iframe]:w-full [&_iframe]:max-w-full [&_iframe]:aspect-video [&_iframe]:rounded-xl">
         <Content />
       </div>
       <aside class="hidden lg:block">
