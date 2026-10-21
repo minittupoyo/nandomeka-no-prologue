@@ -4,6 +4,7 @@ import { defineConfig } from "astro/config";
 
 import tailwindcss from "@tailwindcss/vite";
 import expressiveCode from "astro-expressive-code";
+import { satteriCallout } from "./src/plugins/satteri-callout";
 import { satteriHardbreaks } from "./src/plugins/satteri-hardbreaks";
 import { satteriLinkCard } from "./src/plugins/satteri-link-card";
 
@@ -15,7 +16,7 @@ export default defineConfig({
   markdown: {
     processor: satteri({
       mdastPlugins: [satteriHardbreaks()],
-      hastPlugins: [satteriLinkCard()],
+      hastPlugins: [satteriCallout(), satteriLinkCard()],
     }),
   },
   integrations: [

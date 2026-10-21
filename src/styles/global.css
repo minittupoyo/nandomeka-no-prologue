@@ -35,6 +35,48 @@
   }
 }
 
+/* コールアウト（> [!NOTE] など） */
+.callout {
+  @apply my-6 rounded-xl border px-4 py-3 text-zinc-800;
+
+  --callout-color: var(--color-sky-600);
+  border-color: color-mix(in oklab, var(--callout-color) 25%, white);
+  background-color: color-mix(in oklab, var(--callout-color) 5%, white);
+
+  &.callout-tip {
+    --callout-color: var(--color-emerald-600);
+  }
+
+  &.callout-important {
+    --callout-color: var(--color-violet-600);
+  }
+
+  &.callout-warning {
+    --callout-color: var(--color-amber-600);
+  }
+
+  &.callout-caution {
+    --callout-color: var(--color-red-600);
+  }
+
+  .callout__title {
+    @apply m-0 mb-1 flex items-center gap-2 text-sm font-semibold;
+    color: var(--callout-color);
+  }
+
+  .callout__icon {
+    @apply m-0 size-5 shrink-0;
+  }
+
+  .callout__body > :first-child {
+    @apply mt-0;
+  }
+
+  .callout__body > :last-child {
+    @apply mb-0;
+  }
+}
+
 /* 記事内の外部リンクカード。メディアは右（先頭にあるときは左）に置く */
 a.satteri-link-card {
   --card-media: clamp(12rem, 35%, 16rem);
