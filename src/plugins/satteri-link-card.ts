@@ -1,57 +1,109 @@
-import {
-  createFileSystemImageCacheStore as createDefaultFileSystemImageCacheStore,
-  createLinkPreviewResolvers,
-  type FetchConcurrencyOptions,
-  type ImageCacheStore,
-  type LinkMetadata,
-} from "@itoshinji/link-preview";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import ogs from "open-graph-scraper";
 import { defineHastPlugin } from "satteri";
 import type { HastPluginDefinition, HastVisitorContext } from "satteri";
 import type { Element, Text } from "hast";
 
-export type MetadataCacheOptions = {
-  directory?: string;
-  maxAge?: number | false;
+type LinkMetadata = {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
 };
 
-export type ThumbnailOptions = {
-  position?: "left" | "right";
+type CacheEntry = {
+  fetchedAt: number;
+  metadata: LinkMetadata;
+  url: string;
+  version: 1;
 };
 
-export type MetadataTransformer = (metadata: Readonly<LinkMetadata>, url: URL) => LinkMetadata | Promise<LinkMetadata>;
+const CACHE_DIRECTORY = ".cache/satteri-link-card";
+const MAX_CONCURRENT_REQUESTS = 4;
+const FETCH_TIMEOUT_SECONDS = 10;
 
-export type ImageCacheOptions = {
-  store?: ImageCacheStore;
-  maxImageBytes?: number;
-};
+function cachePath(url: URL): string {
+  return join(CACHE_DIRECTORY, `${createHash("sha256").update(url.href).digest("hex")}.json`);
+}
 
-export type SatteriLinkCardOptions = FetchConcurrencyOptions & {
-  /** Fetch implementation for metadata and image-cache downloads. Defaults to globalThis.fetch. */
-  fetch?: typeof globalThis.fetch;
-  metadataCache?: MetadataCacheOptions | false;
-  shortenUrl?: boolean;
-  thumbnail?: false | ThumbnailOptions;
-  favicon?: false;
-  ignoreExtensions?: string[];
-  transformMetadata?: MetadataTransformer;
-  imageCache?: boolean | ImageCacheOptions;
-  openInNewTab?: boolean;
-};
+async function readCache(url: URL): Promise<LinkMetadata | undefined> {
+  try {
+    const entry = JSON.parse(await readFile(cachePath(url), "utf8")) as CacheEntry;
+    if (entry.version === 1 && entry.metadata) return entry.metadata;
+  } catch {}
+}
 
-export type FileSystemImageCacheOptions = {
-  directory?: string;
-  publicPath?: string;
-};
+async function writeCache(url: URL, metadata: LinkMetadata): Promise<void> {
+  const entry: CacheEntry = { fetchedAt: Date.now(), metadata, url: url.href, version: 1 };
+  try {
+    await mkdir(CACHE_DIRECTORY, { recursive: true });
+    await writeFile(cachePath(url), `${JSON.stringify(entry, null, 2)}\n`);
+  } catch {}
+}
 
-const DEFAULT_DIRECTORY = "public/satteri-link-card";
-const DEFAULT_PUBLIC_PATH = "/satteri-link-card";
-const DEFAULT_METADATA_CACHE_DIRECTORY = ".cache/satteri-link-card";
+function resolveUrl(value: string | undefined, base: URL): string | undefined {
+  if (!value) return;
+  try {
+    return new URL(value, base).href;
+  } catch {}
+}
 
-export function createFileSystemImageCacheStore(options: FileSystemImageCacheOptions = {}): ImageCacheStore {
-  return createDefaultFileSystemImageCacheStore({
-    directory: options.directory ?? DEFAULT_DIRECTORY,
-    publicPath: options.publicPath ?? DEFAULT_PUBLIC_PATH,
+async function scrapeMetadata(url: URL): Promise<LinkMetadata | undefined> {
+  const { error, result } = await ogs({
+    url: url.href,
+    timeout: FETCH_TIMEOUT_SECONDS,
+    fetchOptions: { headers: { "user-agent": "Mozilla/5.0 (compatible; nandomeka-no-prologue link card)" } },
   });
+  if (error || !result.success) return;
+
+  const pageUrl = new URL(result.ogUrl ?? result.requestUrl ?? url.href);
+  const image = result.ogImage?.[0]?.url ?? result.twitterImage?.[0]?.url;
+
+  return {
+    url: url.href,
+    title: result.ogTitle ?? result.twitterTitle,
+    description: result.ogDescription ?? result.twitterDescription,
+    image: resolveUrl(image, url),
+    favicon: resolveUrl(result.favicon, url) ?? new URL("/favicon.ico", pageUrl).href,
+  };
+}
+
+let activeRequests = 0;
+const waiting: Array<() => void> = [];
+
+async function withConcurrencyLimit<T>(task: () => Promise<T>): Promise<T> {
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+    await new Promise<void>((resolve) => waiting.push(resolve));
+  }
+  activeRequests++;
+  try {
+    return await task();
+  } finally {
+    activeRequests--;
+    waiting.shift()?.();
+  }
+}
+
+const inflight = new Map<string, Promise<LinkMetadata | undefined>>();
+
+function resolveMetadata(url: URL): Promise<LinkMetadata | undefined> {
+  let pending = inflight.get(url.href);
+  if (!pending) {
+    pending = (async () => {
+      const cached = await readCache(url);
+      if (cached) return cached;
+      try {
+        const metadata = await withConcurrencyLimit(() => scrapeMetadata(url));
+        if (metadata) await writeCache(url, metadata);
+        return metadata;
+      } catch {}
+    })();
+    inflight.set(url.href, pending);
+  }
+  return pending;
 }
 
 function findLinkUrl(paragraph: Readonly<Element>, context: HastVisitorContext): { url: URL; fallbackTitle?: string } | undefined {
@@ -107,20 +159,13 @@ function element(tagName: string, properties: Record<string, unknown>, children:
 function renderLinkCard(
   metadata: LinkMetadata,
   fallbackTitle: string | undefined,
-  options: {
-    shortenUrl: boolean;
-    thumbnail: false | ThumbnailOptions;
-    favicon: boolean;
-    openInNewTab: boolean;
-  },
+  options: { thumbnail: boolean },
 ): Element {
   const url = new URL(metadata.url);
-  const thumbnailPosition = options.thumbnail === false ? undefined : (options.thumbnail.position ?? "right");
-
-  const host = element("span", { className: ["satteri-link-card__host"] }, [text(options.shortenUrl ? url.hostname : url.href)]);
+    const host = element("span", { className: ["satteri-link-card__host"] }, [text(url.hostname)]);
 
   const metaChildren: Array<Element | Text> = [];
-  if (options.favicon && metadata.favicon) {
+  if (metadata.favicon) {
     metaChildren.push(
       element(
         "img",
@@ -153,12 +198,8 @@ function renderLinkCard(
       {
         className: ["satteri-link-card"],
         href: metadata.url,
-        ...(options.openInNewTab
-          ? {
-              rel: ["noopener", "noreferrer"],
-              target: "_blank",
-            }
-          : {}),
+        rel: ["noopener", "noreferrer"],
+        target: "_blank",
       },
       [...children],
     );
@@ -180,117 +221,58 @@ function renderLinkCard(
     ]);
   }
 
-  if (metadata.image !== undefined && thumbnailPosition !== undefined) {
-    return createLinkCard(thumbnailPosition === "right" ? [body, createMedia(metadata.image)] : [createMedia(metadata.image), body]);
+  if (metadata.image && options.thumbnail) {
+    return createLinkCard([body, createMedia(metadata.image)]);
   }
 
   return createLinkCard([body]);
 }
 
-function hasIgnoredExtension(url: URL, extensions: string[]): boolean {
-  const pathname = url.pathname.toLowerCase();
-  for (const extension of extensions) {
-    if (pathname.endsWith(extension.toLowerCase())) return true;
+function findInlineLink(anchor: Readonly<Element>, context: HastVisitorContext): URL | undefined {
+  const href = anchor.properties?.href;
+  if (typeof href !== "string") return;
+  if (anchor.properties?.dataHoverCard !== undefined) return;
+
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return;
   }
-  return false;
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
+  const parent = context.parent(anchor);
+  if (parent?.type === "element" && parent.tagName === "p" && findLinkUrl(parent, context)) return;
+
+  return url;
 }
 
-function resolveOptions(options: SatteriLinkCardOptions) {
-  const metadataCache = options.metadataCache ?? {};
-  const imageCache = options.imageCache ?? false;
-  const imageCacheOptions = imageCache === true ? {} : imageCache;
-
-  return {
-    metadataCache:
-      metadataCache === false
-        ? false
-        : {
-            directory: metadataCache.directory ?? DEFAULT_METADATA_CACHE_DIRECTORY,
-            maxAge: metadataCache.maxAge,
-          },
-    shortenUrl: options.shortenUrl ?? true,
-    thumbnail: options.thumbnail ?? { position: "right" as const },
-    favicon: options.favicon !== false,
-    ignoreExtensions: options.ignoreExtensions ?? [],
-    transformMetadata: options.transformMetadata,
-    imageCache:
-      imageCacheOptions === false
-        ? false
-        : {
-            maxImageBytes: imageCacheOptions.maxImageBytes,
-            store: imageCacheOptions.store ?? createFileSystemImageCacheStore(),
-          },
-    openInNewTab: options.openInNewTab ?? true,
-  };
-}
-
-export function satteriLinkCard(options: SatteriLinkCardOptions = {}): HastPluginDefinition {
-  const resolvedOptions = resolveOptions(options);
-  const { resolveMetadata, resolveImage } = createLinkPreviewResolvers({
-    cache: resolvedOptions.metadataCache,
-    fetch: options.fetch,
-    maxConcurrentRequests: options.maxConcurrentRequests,
-    maxConcurrentRequestsPerHost: options.maxConcurrentRequestsPerHost,
-    image:
-      resolvedOptions.imageCache === false
-        ? undefined
-        : {
-            maxBytes: resolvedOptions.imageCache.maxImageBytes,
-            store: resolvedOptions.imageCache.store,
-          },
-  });
-
-  async function resolveAsset(source?: string) {
-    if (!source || !resolveImage) return source;
-    return resolveImage(source);
-  }
-
-  async function resolveAssets(metadata: LinkMetadata): Promise<LinkMetadata> {
-    const [image, favicon] = await Promise.all([
-      resolvedOptions.thumbnail === false ? undefined : resolveAsset(metadata.image),
-      resolvedOptions.favicon ? resolveAsset(metadata.favicon) : undefined,
-    ]);
-
-    return {
-      ...metadata,
-      image: metadata.image ? image : undefined,
-      favicon: metadata.favicon ? favicon : undefined,
-    };
-  }
-
+export function satteriLinkCard(): HastPluginDefinition {
   return defineHastPlugin({
     name: "satteri-link-card",
     options: { position: true },
     element: {
-      filter: ["p"],
+      filter: ["p", "a"],
       async visit(node, context) {
-        const linkInfo = findLinkUrl(node, context);
-        if (!linkInfo) return;
-        const { url, fallbackTitle } = linkInfo;
+        if (node.tagName === "a") {
+          const inlineUrl = findInlineLink(node, context);
+          if (!inlineUrl) return;
 
-        if (hasIgnoredExtension(url, resolvedOptions.ignoreExtensions)) return;
+          const metadata = await resolveMetadata(inlineUrl);
+          if (!metadata) return;
 
-        const metadata = await resolveMetadata(url);
-        if (!metadata) return;
-
-        let renderMetadata = metadata;
-        if (resolvedOptions.transformMetadata) {
-          try {
-            renderMetadata = {
-              ...(await resolvedOptions.transformMetadata(metadata, url)),
-              url: metadata.url,
-            };
-          } catch {}
+          const { title, description, image, favicon } = metadata;
+          const hoverCard = JSON.stringify({ title, description, image, favicon, host: inlineUrl.hostname });
+          return { ...node, properties: { ...node.properties, dataHoverCard: hoverCard } };
         }
 
-        const assetsResolved = await resolveAssets(renderMetadata);
+        const linkInfo = findLinkUrl(node, context);
+        if (!linkInfo) return;
 
-        return renderLinkCard(assetsResolved, fallbackTitle, {
-          shortenUrl: resolvedOptions.shortenUrl,
-          thumbnail: resolvedOptions.thumbnail,
-          favicon: resolvedOptions.favicon,
-          openInNewTab: resolvedOptions.openInNewTab,
-        });
+        const metadata = await resolveMetadata(linkInfo.url);
+        if (!metadata) return;
+
+        return renderLinkCard(metadata, linkInfo.fallbackTitle, { thumbnail: true });
       },
     },
   });

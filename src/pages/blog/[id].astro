@@ -62,3 +62,112 @@ const { Content, headings } = await render(post);
     </section>
   </div>
 </Layout>
+
+<script>
+  type HoverCardData = { title?: string; description?: string; image?: string; favicon?: string; host: string };
+
+  if (matchMedia("(hover: hover)").matches) {
+    const card = document.createElement("div");
+    card.className = "hover-card";
+    card.setAttribute("role", "tooltip");
+    card.id = "hover-card";
+    document.body.append(card);
+
+    let showTimer: number | undefined;
+    let hideTimer: number | undefined;
+    let current: HTMLAnchorElement | null = null;
+
+    const el = (tag: string, className: string, text?: string) => {
+      const node = document.createElement(tag);
+      node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+
+    const render = (data: HoverCardData) => {
+      card.replaceChildren();
+      if (data.image) {
+        const image = el("img", "hover-card__image") as HTMLImageElement;
+        image.src = data.image;
+        image.alt = "";
+        image.loading = "lazy";
+        card.append(image);
+      }
+      const body = el("div", "hover-card__body");
+      if (data.title) body.append(el("span", "hover-card__title", data.title));
+      if (data.description) body.append(el("span", "hover-card__description", data.description));
+      const meta = el("div", "hover-card__meta");
+      if (data.favicon) {
+        const favicon = el("img", "hover-card__favicon") as HTMLImageElement;
+        favicon.src = data.favicon;
+        favicon.alt = "";
+        meta.append(favicon);
+      }
+      meta.append(el("span", "", data.host));
+      body.append(meta);
+      card.append(body);
+    };
+
+    const place = (anchor: HTMLElement) => {
+      const rect = anchor.getBoundingClientRect();
+      const { width, height } = card.getBoundingClientRect();
+      const gap = 8;
+      const left = Math.min(Math.max(16, rect.left), window.innerWidth - width - 16);
+      const below = rect.bottom + gap + height <= window.innerHeight || rect.top - gap - height < 0;
+      card.style.left = `${left}px`;
+      card.style.top = `${below ? rect.bottom + gap : rect.top - gap - height}px`;
+    };
+
+    const show = (anchor: HTMLAnchorElement) => {
+      let data: HoverCardData;
+      try {
+        data = JSON.parse(anchor.dataset.hoverCard ?? "");
+      } catch {
+        return;
+      }
+      current = anchor;
+      render(data);
+      place(anchor);
+      anchor.setAttribute("aria-describedby", card.id);
+      card.dataset.open = "";
+    };
+
+    const hide = () => {
+      current?.removeAttribute("aria-describedby");
+      current = null;
+      delete card.dataset.open;
+    };
+
+    const schedule = (anchor: HTMLAnchorElement) => {
+      clearTimeout(hideTimer);
+      clearTimeout(showTimer);
+      showTimer = window.setTimeout(() => show(anchor), current ? 0 : 250);
+    };
+
+    const leave = () => {
+      clearTimeout(showTimer);
+      hideTimer = window.setTimeout(hide, 100);
+    };
+
+    const target = (event: Event) => (event.target as Element).closest<HTMLAnchorElement>("a[data-hover-card]");
+
+    document.addEventListener("mouseover", (event) => {
+      const anchor = target(event);
+      if (anchor) schedule(anchor);
+    });
+    document.addEventListener("mouseout", (event) => {
+      if (target(event)) leave();
+    });
+    document.addEventListener("focusin", (event) => {
+      const anchor = target(event);
+      if (anchor) schedule(anchor);
+    });
+    document.addEventListener("focusout", (event) => {
+      if (target(event)) leave();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") hide();
+    });
+    window.addEventListener("scroll", hide, { passive: true });
+  }
+</script>

@@ -92,3 +92,36 @@ a.satteri-link-card {
     }
   }
 }
+
+/* 記事内リンクのホバーカード */
+.hover-card {
+  @apply pointer-events-none fixed z-50 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-zinc-200 bg-white text-zinc-900 opacity-0 shadow-lg transition-opacity duration-150 ease-out;
+
+  &[data-open] {
+    @apply opacity-100;
+  }
+
+  .hover-card__image {
+    @apply block aspect-video w-full bg-zinc-100 object-cover;
+  }
+
+  .hover-card__body {
+    @apply flex flex-col gap-1 p-3;
+  }
+
+  .hover-card__title {
+    @apply line-clamp-2 text-sm leading-snug font-semibold;
+  }
+
+  .hover-card__description {
+    @apply line-clamp-3 text-xs leading-normal text-zinc-600;
+  }
+
+  .hover-card__meta {
+    @apply mt-1 flex min-w-0 items-center gap-2 text-xs text-zinc-600;
+  }
+
+  .hover-card__favicon {
+    @apply size-4 shrink-0 object-contain;
+  }
+}
